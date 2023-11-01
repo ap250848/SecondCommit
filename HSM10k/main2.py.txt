@@ -1,0 +1,73 @@
+To support multiple calls to HSM operations using a loop, you can modify the script to iterate a specified number of times. Here's an updated version of the script with support for multiple hits using a loop:
+
+```python
+import sys
+import socket
+from struct import *
+
+TCP_IP = '10.4.100.98'
+TCP_PORT = 12345  # Change this to the port number you need
+BUFFER_SIZE = 1024
+
+def connect_to_hsm():
+    try:
+        hsmsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        hsmsocket.connect((TCP_IP, TCP_PORT))
+        return hsmsocket
+    except socket.error as err:
+        print(f"Socket error: {err}")
+        sys.exit(1)
+
+def send_command(socket, command):
+    try:
+        size = pack('>h', len(command))
+        message = size + command
+        socket.send(message)
+        data = socket.recv(BUFFER_SIZE)
+        return data.decode('utf-8')
+    except socket.error as err:
+        print(f"Error sending/receiving data: {err}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    hsmsocket = connect_to_hsm()
+
+    while True:
+        print("Select an HSM operation:")
+        print("1. Operation 1")
+        print("2. Operation 2")
+        print("3. Quit")
+        
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            command = b'Command for Operation 1'
+        elif choice == '2':
+            command = b'Command for Operation 2'
+        elif choice == '3':
+            break
+        else:
+            print("Invalid choice. Please try again.")
+            continue
+
+        HSMTxnCount = int(input("Enter the number of times to hit HSM: "))
+        print(f"Total transaction count for {choice} is {HSMTxnCount}")
+
+        for _ in range(HSMTxnCount):
+            response = send_command(hsmsocket, command)
+            print(f"Response from HSM for {choice}:", response)
+
+    hsmsocket.close()
+```
+
+In this updated script:
+
+- After selecting an HSM operation, the script prompts the user to enter the number of times they want to hit the HSM with that specific operation.
+
+- The for loop then performs the specified HSM operation the specified number of times, sending the command and receiving the response for each iteration.
+
+- The loop continues until the user chooses to quit (option 3).
+
+- You can customize the IP address (`TCP_IP`), port number (`TCP_PORT`), commands, and operation-specific logic as needed.
+
+This modification allows you to repeatedly execute a specific HSM operation multiple times, making it easier to perform performance testing or stress testing on the HSM.
